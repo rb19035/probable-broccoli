@@ -1,0 +1,50 @@
+name: Semgrep CE SAST scan
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    semgrep:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Set up Java
+              uses: actions/setup-java@v4
+              with:
+                distribution: temurin
+                java-version: '21'
+
+            - name: Install Semgrep
+              run: pip install semgrep
+
+            - name: Checkout repository
+              uses: actions/checkout@v2
+
+            - name: Run Semgrep SAST scan
+              run: semgrep scan --config "p/java" --sarif --sarif-output sarif/semgrepSAST-${{ github.run_number }}.sarif
+
+            - name: Archive SAST results
+              uses: actions/upload-artifact@v4
+              with:
+                  name: semgrepSAST-${{ github.run_number }}.sarif
+                  path: sarif/semgrepSAST-${{ github.run_number }}.sarif
+                  retention-days: 5
+
+            - name: Upload SAST SARIF report
+              uses: github/codeql-action/upload-sarif@v4
+              with:
+                sarif_file: sarif/semgrepSAST-${{ github.run_number }}.sarif
+
+            - name: Upload SARIF files to S3
+              uses: jakejarvis/s3-sync-action@master
+              with:
+                    args: --follow-symlinks
+              env:
+                    AWS_S3_BUCKET: ${{ secrets.AWS_S3_DOJO_BUCKET}}
+                    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                    AWS_REGION: 'us-east-1'   # optional: defaults to us-east-1
+                    SOURCE_DIR: 'sarif'      # optional: defaults to entire repository
