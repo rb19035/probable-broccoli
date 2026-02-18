@@ -42,13 +42,6 @@ jobs:
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
-      - name: SCA Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
-          path: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
-          retention-days: 1
-
       - name: Install Semgrep CE
         run: pip install semgrep
 
@@ -59,13 +52,6 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
-
-      - name: SAST Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
-          path: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
-          retention-days: 1
 
       - name: Sarif File Upload
         uses: jakejarvis/s3-sync-action@master
