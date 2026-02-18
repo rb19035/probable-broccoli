@@ -44,12 +44,12 @@ jobs:
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
-      - name: sca-archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
-          path: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
-          retention-days: 1
+#      - name: sca-archive
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
+#          path: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
+#          retention-days: 1
 
       - name: semgrep-ce-install
         run: pip install semgrep
@@ -63,12 +63,12 @@ jobs:
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
 
-      - name: sast-archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
-          path: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
-          retention-days: 1
+#      - name: sast-archive
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+#          path: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+#          retention-days: 1
 
       - name: sarif-file-defect-dojo-upload
         uses: jakejarvis/s3-sync-action@master
