@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  security-events: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,12 +27,11 @@ jobs:
 
   security:
     needs: [ build ]
-    permissions:
-      security-events: write
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: snyk-sca
         uses: snyk/actions/maven-3-jdk-21@master
@@ -44,31 +46,28 @@ jobs:
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
-#      - name: sca-archive
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: ${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
-#          path: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
-#          retention-days: 1
+      - name: sca-archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
+          path: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
+          retention-days: 1
 
-      - name: semgrep-ce-install
-        run: pip install semgrep
-
-      # Run Semgrep CE SAST scan and export results as Sarif file - Semgrep CE only executes a minimal SAST scan
       - name: semgrep-ce-sast
-        run: semgrep scan --config "p/java" --sarif --sarif-output sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+        run: pip install semgrep |
+             semgrep scan --config "p/java" --sarif --sarif-output sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
 
       - name: sast-condeql-upload
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
 
-#      - name: sast-archive
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: ${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
-#          path: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
-#          retention-days: 1
+      - name: sast-archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+          path: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+          retention-days: 1
 
       - name: sarif-file-defect-dojo-upload
         uses: jakejarvis/s3-sync-action@master
