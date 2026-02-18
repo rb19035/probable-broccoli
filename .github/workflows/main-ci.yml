@@ -23,60 +23,60 @@ jobs:
         run: mvn -B package --file ./pom.xml
 
   security:
-      needs: [ build ]
-      permissions:
-        security-events: write
-      runs-on: ubuntu-latest
+    needs: [ build ]
+    permissions:
+      security-events: write
+    runs-on: ubuntu-latest
 
-      steps:
-        - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-        - name: snyk-sca
-          uses: snyk/actions/maven-3-jdk-21@master
-          continue-on-error: true # To make sure that SARIF upload gets called
-          env:
-            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          with:
-            args: --sarif-file-output=sarif/${{ github.event.repository.name }}-sca-snyk-${{ github.run_number }}.sarif
+      - name: snyk-sca
+        uses: snyk/actions/maven-3-jdk-21@master
+        continue-on-error: true # To make sure that SARIF upload gets called
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
-        - name: sca-codeql-upload
-          uses: github/codeql-action/upload-sarif@v4
-          with:
-            sarif_file: sarif/${{ github.event.repository.name }}-sca-snyk-${{ github.run_number }}.sarif
+      - name: sca-codeql-upload
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
-        - name: sca-archive
-          uses: actions/upload-artifact@v4
-          with:
-            name: sca-snyk.sarif
-            path: sarif/${{ github.event.repository.name }}-sca-snyk-${{ github.run_number }}.sarif
-            retention-days: 1
+      - name: sca-archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
+          path: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
+          retention-days: 1
 
-        - name: semgrep-cd-install
-          run: pip install semgrep
+      - name: semgrep-ce-install
+        run: pip install semgrep
 
-        # Run Semgrep CE SAST scan and export results as Sarif file - Semgrep CE only executes a minimal SAST scan
-        - name: semgrep-ce-sast
-          run: semgrep scan --config "p/java" --sarif --sarif-output sarif/${{ github.event.repository.name }}-semgrep-ce-sast-${{ github.run_number }}.sarif
+      # Run Semgrep CE SAST scan and export results as Sarif file - Semgrep CE only executes a minimal SAST scan
+      - name: semgrep-ce-sast
+        run: semgrep scan --config "p/java" --sarif --sarif-output sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
 
-        - name: sast-condeql-upload
-          uses: github/codeql-action/upload-sarif@v4
-          with:
-            sarif_file: sarif/${{ github.event.repository.name }}-semgrep-ce-sast-${{ github.run_number }}.sarif
+      - name: sast-condeql-upload
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
 
-        - name: sast-archive
-          uses: actions/upload-artifact@v4
-          with:
-            name: ${{ github.event.repository.name }}-semgrep-ce-sast-${{ github.run_number }}.sarif
-            path: sarif/${{ github.event.repository.name }}-semgrep-ce-sast-${{ github.run_number }}.sarif
-            retention-days: 1
+      - name: sast-archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+          path: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+          retention-days: 1
 
-        - name: sarif-file-defect-dojo-upload
-          uses: jakejarvis/s3-sync-action@master
-          with:
-            args: --follow-symlinks
-          env:
-            AWS_S3_BUCKET: ${{ secrets.AWS_S3_DOJO_BUCKET}}
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_REGION: 'us-east-1'   # optional: defaults to us-east-1
-            SOURCE_DIR: 'sarif'      # optional: defaults to entire repository
+      - name: sarif-file-defect-dojo-upload
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --follow-symlinks
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_DOJO_BUCKET}}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-1'   # optional: defaults to us-east-1
+          SOURCE_DIR: 'sarif'      # optional: defaults to entire repository
