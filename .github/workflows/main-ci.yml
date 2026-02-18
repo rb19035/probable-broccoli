@@ -13,17 +13,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+
       - name: Build with Maven
         run: mvn -B package --file ./pom.xml
 
-  security:
+  security-sca:
     needs: [ build ]
     runs-on: ubuntu-latest
     steps:
@@ -38,20 +41,37 @@ jobs:
         with:
           args: --sarif-file-output=sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
-      - name: SCA CodeQl Upload
+      - name: SCA GAS Upload
         uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
-      - name: Install Semgrep CE
-        continue-on-error: true
-        run: pip install semgrep
+      - name: Sarif File Upload
+        uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_DOJO_BUCKET}}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-1'
+          SOURCE_DIR: 'sarif'
 
-      - name: Semgrep CE SAST
-        run: semgrep scan --config "p/java" --sarif --sarif-output sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+  security-sast:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
 
-      - name: SAST CodeQL Upload
+    # Skip any PR created by dependabot to avoid permission issues:
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep ci --sarif > sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
+        env:
+         SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: SAST GAS Upload
         continue-on-error: true
         uses: github/codeql-action/upload-sarif@v4
         with:
