@@ -1,0 +1,6 @@
+logging:
+  level:
+    root: INFO
+    com.cgms: DEBUG
+spring:
+  server: 2224
