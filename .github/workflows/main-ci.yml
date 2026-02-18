@@ -31,13 +31,6 @@ jobs:
       steps:
         - uses: actions/checkout@v4
 
-        - name: Set up JDK 21
-          uses: actions/setup-java@v4
-          with:
-            java-version: '21'
-            distribution: 'temurin'
-            cache: maven
-
         - name: snyk-sca
           uses: snyk/actions/maven-3-jdk-21@master
           continue-on-error: true # To make sure that SARIF upload gets called
