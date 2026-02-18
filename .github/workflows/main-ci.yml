@@ -1,4 +1,4 @@
-name: main-ci-cd
+name: Main CI CD
 
 on:
   push:
@@ -22,6 +22,7 @@ jobs:
           cache: maven
       - name: Build with Maven
         run: mvn -B package --file ./pom.xml
+
   security:
     needs: [ build ]
     runs-on: ubuntu-latest
@@ -39,16 +40,19 @@ jobs:
 
       - name: SCA CodeQl Upload
         uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.snyk.sca.${{ github.run_number }}.sarif
 
       - name: Install Semgrep CE
+        continue-on-error: true
         run: pip install semgrep
 
       - name: Semgrep CE SAST
         run: semgrep scan --config "p/java" --sarif --sarif-output sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
 
       - name: SAST CodeQL Upload
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif/${{ github.event.repository.name }}.semgrep-ce.sast.${{ github.run_number }}.sarif
