@@ -3,4 +3,12 @@ logging:
     root: INFO
     com.cgms: DEBUG
 spring:
-  server: 2224
+  quartz:
+    job-store-type: memory
+
+aws:
+  region: your-aws-region
+  access-key: your-access-key
+  secret-key: your-secret-key
+  s3:
+    bucket-name: your-bucket-name
